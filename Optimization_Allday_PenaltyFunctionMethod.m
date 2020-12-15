@@ -1,6 +1,7 @@
 %% 2020.12.4 考虑加入罚函数。详细安排都写在github的说明里了。
 %% 这里用到的充电放电都是15分钟内的平均功率。
 %% 设置导入选项并导入数据
+clear;
 for i = 1 % 这里的for不循环，只是为了折叠代码。为什么不用if，是因为if没有折叠功能！？
     clear;
     opts = spreadsheetImportOptions("NumVariables", 3);
@@ -17,7 +18,7 @@ for i = 1 % 这里的for不循环，只是为了折叠代码。为什么不用if
     SolPowMax = tbl.kW2;
     clear opts tbl
 end
-%% 写总的粒子群算法
+% 写总的粒子群算法
 temp21 = 0; % 这个变量记录的是，风电的功率在寻优过程中超出边界的次数。还挺多的，1038582这么多。因此加罚函数比较有必要。
 MMMax = 99; % 这个是惩罚因子
 h=waitbar(0,'Please wait');
@@ -99,6 +100,9 @@ for i = 1:16
     temp84 = temp84 + 6;
     temp85 = temp85 + 6;
 end
+
+% 只使用前几个时间段
+Parl = 10;
 while iter <= ger
     for i = 1:N
         % 妙啊！BatPow有可能取值为负是电源，为正是负荷。发现不用标注充放电了！！！
@@ -121,7 +125,7 @@ while iter <= ger
         Cost15_96Nger(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
             + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4;
     end
-    CAllday1N = sum(Cost15_96Nger(:,:,iter));
+    CAllday1N = sum(Cost15_96Nger(1:Parl,:,iter));
 
    for j = 1:N                                  %更新个体最小值
         if CAlldayMY1N(j) > CAllday1N(j)          % 这里是不是应该取最小值？？？
