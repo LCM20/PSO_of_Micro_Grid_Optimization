@@ -29,15 +29,16 @@ GriPow96N = zeros(96,N); %电网输入的电能
 WinPow96N = zeros(96,N);% 风力
 SolPow96N = zeros(96,N);% 太阳能
 BatPow96N = zeros(96,N);% 蓄电池电量。
-ger = 200;                      % 最大迭代次数  
+ger = 9999;                      % 最大迭代次数  
 
 WinPowLimit962 = zeros(96, 2);              %这里其实每个时间段，都有一个限制。需要回头改。  
 WinPowLimit962(:,2) = WinPowMax;             % 第一列是零，第二列是上限。
 SolPowLimit962 = zeros(96, 2);                
 SolPowLimit962(:,2) = SolPowMax;
 BatPowLimit962 = zeros(96, 2);
-BatPowLimit962(:,1) = -300*0.2;          %蓄电池最大充放电功率
-BatPowLimit962(:,2) = 300*0.2;          %蓄电池最大充放电功率
+% 这里先假设前十个时间段是放电，然后后面十个个时间段是充电。
+BatPowLimit962(1:10,1) = -300*0.2;          %蓄电池最大充放电功率
+BatPowLimit962(11:20,2) = 300*0.2;          %蓄电池最大充放电功率
 
 Vlimit12 = [-5, 5];               % 设置速度限制
 WinPowV96N = Vlimit12(2)*rand(96,N);                  % 初始种群的速度
@@ -45,8 +46,8 @@ SolPowV96N = Vlimit12(2)*rand(96,N);                  % 初始种群的速度
 BatPowV96N = Vlimit12(2)*rand(96,N) - Vlimit12(2)/2;              % 初始种群的速度
 
 w = 0.8;                        % 惯性权重。%这里注意，看上面！我的速度设置的是一个0到1的随机数，但是实际上我的位置的变动的尺度可能是几百那么大，如此一来我的速度就非常小几乎可以忽略不记了。因此如果我想要达到一种比较好的效果，那么我就需要在这里设置一个系数。
-c1 = 0.5;                       % 自我学习因子
-c2 = 0.5;                       % 群体学习因子
+c1 = 2;                       % 自我学习因子
+c2 = 2;                       % 群体学习因子
 % for i = 1:N
 %     WinPow96N(:,i) = WinPowLimit962(:,1) + (WinPowLimit962(:,2) - WinPowLimit962(:,1)) .* rand(1);%初始种群的位置
 %     SolPow96N(:,i) = SolPowLimit962(:,1) + (SolPowLimit962(:,2) - SolPowLimit962(:,1)) .* rand(1);%初始种群的位置
@@ -112,13 +113,13 @@ for i = 1:16
 end
 
 % 只使用前几个时间段
-Parl = 2;
+Parl = 20;
 while iter <= ger
     
-    if iter == 50
-       BatPow96N(1,1) = -3; 
-       BatPow96N(2,1) = -3; 
-    end
+%     if iter == 50
+%        BatPow96N(1,1) = -3; 
+%        BatPow96N(2,1) = -3; 
+%     end
     for i = 1:N
         % 妙啊！BatPow有可能取值为负是电源，为正是负荷。发现不用标注充放电了！！！
         % 你仔细想啊，这里的蓄电池如果在某时间段小于零，说明在放电。这里与风电不一样，风电可以弃风弃光，不放出极限功率，
@@ -221,7 +222,7 @@ clear temp130;
 clear temp125;
 delete(h);
 figure;
-subplot(2,2,1);
+% subplot(2,2,1);
 % 因为我们15分钟的时间，当成了一个算的，计算功率没有乘时间，所以这里除以4。
 plot(Record1ger); 
 title("全天总花费");
