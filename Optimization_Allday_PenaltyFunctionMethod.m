@@ -24,12 +24,12 @@ end
 temp21 = 0; % 这个变量记录的是，风电的功率在寻优过程中超出边界的次数。还挺多的，1038582这么多。因此加罚函数比较有必要。
 MMMax = 99; % 这个是惩罚因子
 h=waitbar(0,'Please wait');
-N = 100;                  % 初始种群个数，所以应该有50个的以下三个变量。
+N = 50;                  % 初始种群个数，所以应该有50个的以下三个变量。
 GriPow96N = zeros(96,N); %电网输入的电能
 WinPow96N = zeros(96,N);% 风力
 SolPow96N = zeros(96,N);% 太阳能
 BatPow96N = zeros(96,N);% 蓄电池电量。
-ger = 9999;                      % 最大迭代次数  
+ger = 999;                      % 最大迭代次数  
 
 WinPowLimit962 = zeros(96, 2);              %这里其实每个时间段，都有一个限制。需要回头改。  
 WinPowLimit962(:,2) = WinPowMax;             % 第一列是零，第二列是上限。
@@ -60,7 +60,10 @@ c2 = 2;                       % 群体学习因子
 WinPow96N = zeros(96,N);%初始种群的位置
 SolPow96N = zeros(96,N);%初始种群的位置
 BatPow96N = zeros(96,N);%初始种群的位置
-
+for i = 1:N
+    
+    BatPow96N(:,i) = BatPowLimit962(:,1) + (BatPowLimit962(:,2) - BatPowLimit962(:,1)) .* rand(1);%初始种群的位置
+end
 
 WinPowMX96N = WinPow96N;                   % 每个个体的历史最佳位置
 SolPowMX96N = SolPow96N;                   % 每个个体的历史最佳位置
