@@ -37,8 +37,8 @@ SolPowLimit962 = zeros(96, 2);
 SolPowLimit962(:,2) = SolPowMax;
 BatPowLimit962 = zeros(96, 2);
 % 这里先假设前十个时间段是放电，然后后面十个个时间段是充电。
-BatPowLimit962(1:10,1) = -300*0.2;          %蓄电池最大充放电功率
-BatPowLimit962(11:20,2) = 300*0.2;          %蓄电池最大充放电功率
+BatPowLimit962(1:3,2) = 300*0.2/4;          %蓄电池最大充放电功率
+BatPowLimit962(4:6,1) = -300*0.2/4;          %蓄电池最大充放电功率
 
 Vlimit12 = [-5, 5];               % 设置速度限制
 WinPowV96N = Vlimit12(2)*rand(96,N);                  % 初始种群的速度
@@ -113,7 +113,7 @@ for i = 1:16
 end
 
 % 只使用前几个时间段
-Parl = 20;
+Parl = 6;
 while iter <= ger
     
 %     if iter == 50
