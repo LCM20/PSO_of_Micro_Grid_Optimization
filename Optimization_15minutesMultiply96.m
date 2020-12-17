@@ -16,7 +16,7 @@ kW2 = tbl.kW2;
 clear opts tbl
 %使用前面的15分钟优化的程序单独加出来一天96个时段的总花费。应该与Optimization_Allday的结果相同。
 cost = 0;
-for time = 1:2
+for time = 1:40
            N = 50;                         % 初始种群个数，所以应该有50个的以下三个变量。
             G = zeros(1,N); %电网输入的电能
             Gw = zeros(1,N);% 风力
