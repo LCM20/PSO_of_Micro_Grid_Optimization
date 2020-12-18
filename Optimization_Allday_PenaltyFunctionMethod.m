@@ -24,12 +24,12 @@ end
 temp21 = 0; % 这个变量记录的是，风电的功率在寻优过程中超出边界的次数。还挺多的，1038582这么多。因此加罚函数比较有必要。
 MMMax = 99; % 这个是惩罚因子
 h=waitbar(0,'Please wait');
-N = 50;                  % 初始种群个数，所以应该有50个的以下三个变量。
+N = 9;                  % 初始种群个数，所以应该有50个的以下三个变量。
 GriPow96N = zeros(96,N); %电网输入的电能
 WinPow96N = zeros(96,N);% 风力
 SolPow96N = zeros(96,N);% 太阳能
 BatPow96N = zeros(96,N);% 蓄电池电量。
-ger = 999;                      % 最大迭代次数  
+ger = 99999;                      % 最大迭代次数  
 
 WinPowLimit962 = zeros(96, 2);              %这里其实每个时间段，都有一个限制。需要回头改。  
 WinPowLimit962(:,2) = WinPowMax;             % 第一列是零，第二列是上限。
@@ -37,8 +37,8 @@ SolPowLimit962 = zeros(96, 2);
 SolPowLimit962(:,2) = SolPowMax;
 BatPowLimit962 = zeros(96, 2);
 % 这里先假设前十个时间段是放电，然后后面十个个时间段是充电。
-BatPowLimit962(1:3,2) = 300*0.2/4;          %蓄电池最大充放电功率
-BatPowLimit962(4:6,1) = -300*0.2/4;          %蓄电池最大充放电功率
+BatPowLimit962(1:6,2) = 300*0.2/4;          %蓄电池最大充放电功率
+BatPowLimit962(1:6,1) = -300*0.2/4;          %蓄电池最大充放电功率
 
 Vlimit12 = [-5, 5];               % 设置速度限制
 WinPowV96N = Vlimit12(2)*rand(96,N);                  % 初始种群的速度
@@ -87,13 +87,13 @@ SolPowRecord96Nger = zeros(96,N,ger);
 GriPowRecord96Nger = zeros(96,N,ger);
 BatPowRecord96Nger = zeros(96,N,ger);
 Cost15_96Nger = zeros(96,N,ger);              % 15分钟花费 行是次数，列是个体。
-
+temp90 = zeros(96,N,ger);
 for i = 1   % 电网价格
     GriPrice962 = zeros(96,2);%第一列是售电电价，第二列是购电电价。
-    GriPrice962(1:28,1) = 0.22;
-    GriPrice962(1:28,2) = 0.25;
-    GriPrice962(29:40,1) = 0.42;
-    GriPrice962(29:40,2) = 0.53;
+    GriPrice962(1:3,1) = 0.22;
+    GriPrice962(1:3,2) = 0.25;
+    GriPrice962(4:40,1) = 0.42;
+    GriPrice962(4:40,2) = 0.53;
     GriPrice962(41:60,1) = 0.65;
     GriPrice962(41:60,2) = 0.82;
     GriPrice962(61:72,1) = 0.42;
@@ -116,7 +116,7 @@ for i = 1:16
 end
 
 % 只使用前几个时间段
-Parl = 40;
+Parl = 6;
 while iter <= ger
     
 %     if iter == 50
@@ -135,7 +135,7 @@ while iter <= ger
     for i = 1:N %G电网电量，为正为购入，为负则为卖出。
         temp125 = BatPow96N(:,i);
         Cost15_96Nger(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
-            + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4  ... % 0.02 * temp125 .*(temp125 < 0)
+            + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4 - 0.02 * temp125 .*(temp125 < 0) ... % - 0.02 * temp125 .*(temp125 < 0) 注意这里应该是负号。
             + MMMax * (max(0,WinPow96N(:,i) - WinPowLimit962(:,2))).^2 ...
             + MMMax * (max(0,-WinPow96N(:,i) + WinPowLimit962(:,1))).^2 ...
             + MMMax * (max(0,SolPow96N(:,i) - SolPowLimit962(:,2))).^2 ...
@@ -143,6 +143,10 @@ while iter <= ger
              + MMMax * (max(0,BatPow96N(:,i) - BatPowLimit962(:,2))).^2 ...
              + MMMax * (max(0,-BatPow96N(:,i) + BatPowLimit962(:,1))).^2 ...
         ;
+        % 下面这一行用来最终输出结果了，所以很重要。
+        temp90(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
+            + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4 - 0.02 * temp125 .*(temp125 < 0) ... % 0.02 * temp125 .*(temp125 < 0)
+            ;
     end
 %     for i = 1:N %G电网电量，为正为购入，为负则为卖出。
 %         Cost15_96Nger(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
@@ -150,7 +154,7 @@ while iter <= ger
 %     end
 
     CAllday1N = sum(Cost15_96Nger(1:Parl,:,iter)) ...
-... %                 + MMMax * (max(0,  -( BatPow96N(1,:) + BatPow96N(2,:) + BatPow96N(3,:) + BatPow96N(4,:) + BatPow96N(5,:) + BatPow96N(6,:))               )).^2 ...
+                 + MMMax*99 * (max(0,  -( BatPow96N(1,:) + BatPow96N(2,:) + BatPow96N(3,:) + BatPow96N(4,:) + BatPow96N(5,:) + BatPow96N(6,:))               )).^2 ...
                 ;
 
    for j = 1:N                                  %更新个体最小值
@@ -216,7 +220,7 @@ while iter <= ger
 %      temp130 = repmat(SolPowLimit962(:,1),1,N);
 %      SolPow96N(SolPow96N < temp130) =  temp130(SolPow96N < temp130);
 
-     Record1ger(1,iter) = min(CAllday1N);
+     Record1ger(1,iter) = min(sum(temp90(1:Parl,:,iter)));
 
      iter = iter+1;
      
@@ -225,6 +229,7 @@ while iter <= ger
 end
 clear temp130;
 clear temp125;
+clear temp90;
 delete(h);
 figure;
 % subplot(2,2,1);
