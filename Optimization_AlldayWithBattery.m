@@ -115,7 +115,7 @@ while iter <= ger
             + MMMax * (max(0,SolPow96N(:,i) - SolPowLimit962(:,2))).^2 ...
             + MMMax * (max(0,-SolPow96N(:,i) + SolPowLimit962(:,1))).^2 ;
         for j = 1:16
-            Cost15_96Nger(:,i,iter)
+            Cost15_96Nger(:,i,iter);
         end
         
     end
@@ -141,6 +141,7 @@ while iter <= ger
     for i = 1:96
         WinPowV96N(i,:) = WinPowV96N(i,:)*w + c1*rand*(WinPowMX96N(i,:) - WinPow96N(i,:)) + c2*rand*(WinPowMXs961(i) - WinPow96N(i,:)); 
         SolPowV96N(i,:) = SolPowV96N(i,:)*w + c1*rand*(SolPowMX96N(i,:) - SolPow96N(i,:)) + c2*rand*(SolPowMXs961(i) - SolPow96N(i,:)); 
+        BatPowV96N(i,:) = BatPowV96N(i,:)*w + c1*rand*(BatPowMX96N(i,:) - BatPow96N(i,:)) + c2*rand*(BatPowMXs961(i) - BatPow96N(i,:)); 
     end
      
      %v = v * w + c1 * rand * (xm - x) + c2 * rand * (repmat(ym, N, 1) - x);% 速度更新
@@ -174,6 +175,7 @@ while iter <= ger
      waitbar(iter/ger,h);
 end
 clear temp130;
+clear temp111;
 delete(h);
 figure;
 subplot(2,2,1);
