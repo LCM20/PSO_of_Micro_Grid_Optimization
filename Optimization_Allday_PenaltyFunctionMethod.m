@@ -165,7 +165,7 @@ while iter <= ger
             CAlldayMY1N(j) = CAllday1N(j);         % 更新个体历史最佳适应度     
         end 
    end 
-    
+      
 
     
     if CAlldayMYs > min(CAllday1N)
