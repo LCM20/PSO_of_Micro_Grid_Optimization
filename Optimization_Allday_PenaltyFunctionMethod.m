@@ -39,7 +39,7 @@ BatPowLimit962 = zeros(96, 2);
 % 这里先假设前十个时间段是放电，然后后面十个个时间段是充电。
 
 
-Parl = 50;
+Parl = 40;
 BatPowLimit962(1:Parl,2) = 300*0.2/4;          %蓄电池最大充放电功率
 BatPowLimit962(1:Parl,1) = -300*0.2/4;          %蓄电池最大充放电功率
 
@@ -158,6 +158,7 @@ while iter <= ger
 
     CAllday1N = sum(Cost15_96Nger(1:Parl,:,iter)) ...
                   + MMMax*999999 * (max(0,  -( sum(BatPow96N(1:Parl,:)) )               )).^2 ...
+                  + MMMax*999999 * (max(0,   sum(BatPow96N(1:28,:))-150                )).^2 ...
                 ;
 
    for j = 1:N                                  %更新个体最小值
