@@ -8,14 +8,10 @@ WinPowMax = Pdata(:,3);
 SolPowMax = Pdata(:,4);
 
 % 写总的粒子群算法
-temp21 = 0; % 这个变量记录的是，风电的功率在寻优过程中超出边界的次数。还挺多的，1038582这么多。因此加罚函数比较有必要。
 MMMax = 99*2; % 这个是惩罚因子
 h=waitbar(0,'Please wait');
 N = 99;                  % 初始种群个数，所以应该有50个的以下三个变量。
 GriPow96N = zeros(96,N); %电网输入的电能
-WinPow96N = zeros(96,N);% 风力
-SolPow96N = zeros(96,N);% 太阳能
-BatPow96N = zeros(96,N);% 蓄电池电量。
 ger = 99999;                      % 最大迭代次数  
 
 WinPowLimit962 = zeros(96, 2);              %这里其实每个时间段，都有一个限制。需要回头改。  
@@ -77,8 +73,8 @@ RecordCostAndPenalty1ger = zeros(1,ger);          % 记录器
 % SolPowRecord96Nger = zeros(96,N,ger);
 % GriPowRecord96Nger = zeros(96,N,ger);
 % BatPowRecord96Nger = zeros(96,N,ger);
-Cost15_96Nger = zeros(96,N,ger);              % 15分钟花费 行是次数，列是个体。
-temp90 = zeros(96,N,ger);
+Cost15_96N = zeros(96,N);              % 15分钟花费 行是次数，列是个体。
+temp90 = zeros(96,N);
 for i = 1   % 电网价格
     GriPrice962 = zeros(96,2);%第一列是售电电价，第二列是购电电价。
     GriPrice962(1:28,1) = 0.22;
@@ -120,11 +116,10 @@ while iter <= ger
         % 或者，其实蓄电池就是个功率可以为负的负载。
         GriPow96N(:,i) = LoaPow + BatPow96N(:,i) - WinPow96N(:,i) - SolPow96N(:,i);  % 
     end
-
     % G15min 行是次数，列是个体。
     for i = 1:N %G电网电量，为正为购入，为负则为卖出。
         temp125 = BatPow96N(:,i);
-        Cost15_96Nger(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
+        Cost15_96N(:,i) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
             + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4 - 0.2 * temp125 .*(temp125 < 0)  ... %  注意这里应该是负号。
             + MMMax * (max(0,WinPow96N(:,i) - WinPowLimit962(:,2))).^2 ...
             + MMMax * (max(0,-WinPow96N(:,i) + WinPowLimit962(:,1))).^2 ...
@@ -134,16 +129,18 @@ while iter <= ger
               + MMMax * (max(0,-BatPow96N(:,i) + BatPowLimit962(:,1))).^2 ...
         ;
         % 下面这一行用来最终输出结果了，所以很重要。
-        temp90(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
+        temp90(:,i) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
             + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4  - 0.2 * temp125 .*(temp125 < 0) ... % 
             ;
     end
+
+    
 %     for i = 1:N %G电网电量，为正为购入，为负则为卖出。
 %         Cost15_96Nger(:,i,iter) = ( GriPow96N(:,i).*(GriPrice962(:,2).*(GriPow96N(:,i)>0)+GriPrice962(:,1).*(GriPow96N(:,i)<=0))...
 %             + WinPow96N(:,i)*0.52 + SolPow96N(:,i)*0.75)/4;
 %     end
 
-    CAllday1N = sum(Cost15_96Nger(41:end,:,iter)) ...
+    CAllday1N = sum(Cost15_96N(41:end,:)) ...
                   + MMMax*999999 * (max(0,  -( sum(BatPow96N(41:end,:)) + 300*0.95)               )).^2 ...
                   ...%+ MMMax*999999 * (max(0,   sum(BatPow96N(1:40,:))- 30                )).^2 ...
                 ;
@@ -193,14 +190,6 @@ while iter <= ger
      SolPow96N = SolPow96N + SolPowV96N;% 位置更新
      BatPow96N = BatPow96N + BatPowV96N;% 位置更新
      
-     for i = 1 : 96
-        for j = 1 : N
-            if (WinPow96N(i,j) > WinPowLimit962(i,2)) || (WinPow96N(i,j) < WinPowLimit962(i,1))
-                temp21 = temp21 + 1;
-            end
-        end
-     end % 用来发现到底是谁超过了边界，发现还挺多。
-     
      % 边界位置处理，有了惩罚项，不用约束边界了。
 %      temp130 = repmat(WinPowLimit962(:,2),1,N);
 %      WinPow96N(WinPow96N > temp130) =  temp130(WinPow96N > temp130);
@@ -211,7 +200,7 @@ while iter <= ger
 %      temp130 = repmat(SolPowLimit962(:,1),1,N);
 %      SolPow96N(SolPow96N < temp130) =  temp130(SolPow96N < temp130);
 
-     RecordCost1ger(1,iter) = min(sum(temp90(41:end,:,iter)));
+     RecordCost1ger(1,iter) = min(sum(temp90(41:end,:)));
      RecordCostAndPenalty1ger(1,iter) = min(CAllday1N);
      iter = iter+1;
      
