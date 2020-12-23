@@ -12,7 +12,7 @@ MMMax = 99*2; % 这个是惩罚因子
 h=waitbar(0,'Please wait');
 N = 999;                  % 初始种群个数，所以应该有50个的以下三个变量。
 GriPow96N = zeros(96,N); %电网输入的电能
-ger = 9999;                      % 最大迭代次数  
+ger = 999;                      % 最大迭代次数  
 
 WinPowLimit962 = zeros(96, 2);              %这里其实每个时间段，都有一个限制。需要回头改。  
 WinPowLimit962(:,2) = WinPowMax;             % 第一列是零，第二列是上限。
@@ -89,17 +89,6 @@ for i = 1   % 电网价格
     GriPrice962(73:84,2) = 0.82;
     GriPrice962(85:96,1) = 0.42;
     GriPrice962(85:96,2) = 0.53;
-end
-
-% 此处规定充放电的时间。直接按照序号来。一共96；
-DisAndCha163 = zeros(16,2); %第一列是开始时间，第二列是结束时间，第三列用来标记充电还是放电。充电为1放电为0
-temp84 = 1;
-temp85 = 6;
-for i = 1:16
-    DisAndCha163(i,1) = temp84;
-    DisAndCha163(i,2) = temp85;
-    temp84 = temp84 + 6;
-    temp85 = temp85 + 6;
 end
 
 % 只使用前几个时间段
